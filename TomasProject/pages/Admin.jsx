@@ -12,7 +12,7 @@ function Admin() {
   const [orders, setOrders] = useState([])
   const [stats, setStats] = useState({
     totalOrders: 0,
-    totalRevenue: 0,
+    totalRevenue: 0, 
     totalProducts: 0,
     activeUsers: 0
   })
