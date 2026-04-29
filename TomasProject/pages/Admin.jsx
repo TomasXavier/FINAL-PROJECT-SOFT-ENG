@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { productsAPI, ordersAPI, dashboardAPI } from '../src/api'
 import './Admin.css'
 
@@ -7,6 +7,7 @@ function Admin() {
   const [showEditModal, setShowEditModal] = useState(false)
   const [editingItem, setEditingItem] = useState(null)
   const [editType, setEditType] = useState('') // 'product' or 'order'
+  const [expandedOrderId, setExpandedOrderId] = useState(null) // Track expanded orders
 
   const [products, setProducts] = useState([])
   const [orders, setOrders] = useState([])
@@ -21,7 +22,7 @@ function Admin() {
 
   useEffect(() => {
     loadData()
-  }, [])
+  }, []) 
 
   const loadData = async () => {
     try {
@@ -46,7 +47,7 @@ function Admin() {
           price: 12500,
           stock: 15,
           description: 'High-performance tire for sports cars',
-          image: '🚗'
+          image: 'https://images.unsplash.com/photo-1584464491033-06628f3a6b7b?w=350&h=220&fit=crop&crop=center'
         },
         {
           id: 2,
@@ -55,7 +56,7 @@ function Admin() {
           price: 8900,
           stock: 20,
           description: 'Comfortable touring tire for daily driving',
-          image: '🚙'
+          image: 'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=350&h=220&fit=crop&crop=center'
         }
       ])
       setOrders([
@@ -103,6 +104,20 @@ function Admin() {
     }
   }
 
+  const handleRestock = async (product) => {
+    const newStock = product.stock + 10 // Add 10 units
+    try {
+      await productsAPI.update(product.id, { ...product, stock: newStock })
+      setProducts(products.map(p => p.id === product.id ? { ...p, stock: newStock } : p))
+      alert(`Restocked ${product.name} by 10 units. New stock: ${newStock}`)
+    } catch (err) {
+      // Fallback: update local state
+      setProducts(products.map(p => p.id === product.id ? { ...p, stock: newStock } : p))
+      alert(`Restocked ${product.name} by 10 units. New stock: ${newStock}`)
+      console.error('Error restocking product:', err)
+    }
+  }
+
   const handleSaveProduct = async (updatedProduct) => {
     try {
       if (updatedProduct.id) {
@@ -137,7 +152,7 @@ function Admin() {
       price: 0,
       stock: 0,
       description: '',
-      image: '🚗'
+      image: 'https://images.unsplash.com/photo-1584464491033-06628f3a6b7b?w=350&h=220&fit=crop&crop=center'
     }
     setEditingItem(newProduct)
     setEditType('product')
@@ -290,7 +305,7 @@ function Admin() {
                         <div key={product.id} className="low-stock-item">
                           <span>{product.name}</span>
                           <span className="stock-count">{product.stock} left</span>
-                          <button className="btn btn-small">Restock</button>
+                          <button className="btn btn-small" onClick={() => handleRestock(product)}>Restock</button>
                         </div>
                       ))}
                     </div>
@@ -348,7 +363,7 @@ function Admin() {
             {activeTab === 'orders' && (
               <div className="orders-management">
                 <div className="section-header">
-                  <h2>Order Management</h2>
+                  <h2>Order Management - All Customer Orders</h2>
                   <div className="filters">
                     <select>
                       <option>All Status</option>
@@ -364,45 +379,89 @@ function Admin() {
                       <tr>
                         <th>Order ID</th>
                         <th>Customer</th>
+                        <th>Email</th>
+                        <th>Phone</th>
                         <th>Date</th>
                         <th>Total</th>
                         <th>Status</th>
+                        <th>Products</th>
                         <th>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
                       {orders.map(order => (
-                        <tr key={order.id}>
-                          <td>#{order.id}</td>
-                          <td>{order.customer}</td>
-                          <td>{order.date}</td>
-                          <td>₱{order.total.toFixed(2)}</td>
-                          <td>
-                            <select
-                              value={order.status}
-                              onChange={(e) => handleUpdateOrderStatus(order.id, e.target.value)}
-                              className="status-select"
-                            >
-                              <option value="Processing">Processing</option>
-                              <option value="Shipped">Shipped</option>
-                              <option value="Delivered">Delivered</option>
-                            </select>
-                          </td>
-                          <td>
-                            <button
-                              className="btn btn-small"
-                              onClick={() => handleEditOrder(order)}
-                            >
-                              Edit
-                            </button>
-                            <button
-                              className="btn btn-small btn-danger"
-                              onClick={() => handleDeleteOrder(order.id)}
-                            >
-                              Delete
-                            </button>
-                          </td>
-                        </tr>
+                        <React.Fragment key={order.id}>
+                          <tr>
+                            <td>#{order.id}</td>
+                            <td>{order.customer}</td>
+                            <td>{order.email || 'N/A'}</td>
+                            <td>{order.phone || 'N/A'}</td>
+                            <td>{new Date(order.date).toLocaleDateString()}</td>
+                            <td>₱{order.total.toFixed(2)}</td>
+                            <td>
+                              <select
+                                value={order.status}
+                                onChange={(e) => handleUpdateOrderStatus(order.id, e.target.value)}
+                                className="status-select"
+                              >
+                                <option value="Processing">Processing</option>
+                                <option value="Shipped">Shipped</option>
+                                <option value="Delivered">Delivered</option>
+                              </select>
+                            </td>
+                            <td>
+                              <button
+                                className="btn btn-small"
+                                onClick={() => setExpandedOrderId(expandedOrderId === order.id ? null : order.id)}
+                              >
+                                {expandedOrderId === order.id ? '▼ Hide' : '▶ Show'} ({order.items.length})
+                              </button>
+                            </td>
+                            <td>
+                              <button
+                                className="btn btn-small"
+                                onClick={() => handleEditOrder(order)}
+                              >
+                                Edit
+                              </button>
+                              <button
+                                className="btn btn-small btn-danger"
+                                onClick={() => handleDeleteOrder(order.id)}
+                              >
+                                Delete
+                              </button>
+                            </td>
+                          </tr>
+                          {expandedOrderId === order.id && (
+                            <tr className="order-details-row">
+                              <td colSpan="9">
+                                <div className="order-items-detail">
+                                  <h4>Products Ordered:</h4>
+                                  <table className="items-table">
+                                    <thead>
+                                      <tr>
+                                        <th>Product Name</th>
+                                        <th>Quantity</th>
+                                        <th>Price per Unit</th>
+                                        <th>Subtotal</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {order.items.map((item, idx) => (
+                                        <tr key={idx}>
+                                          <td>{item.product_name}</td>
+                                          <td className="quantity-center">{item.quantity}</td>
+                                          <td>₱{item.price.toFixed(2)}</td>
+                                          <td>₱{(item.price * item.quantity).toFixed(2)}</td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                        </React.Fragment>
                       ))}
                     </tbody>
                   </table>

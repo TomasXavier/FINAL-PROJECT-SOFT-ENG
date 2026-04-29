@@ -1,0 +1,128 @@
+[
+  {
+    "id": 6,
+    "customer": "user@tomas.com",
+    "email": "",
+    "phone": "",
+    "total": 5200,
+    "status": "Processing",
+    "date": "2026-04-28T06:26:08.041Z",
+    "items": [
+      {
+        "id": 1,
+        "product_name": "Michelin City Grip Pro",
+        "quantity": 1,
+        "price": 5200
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "customer": "user@tomas.com",
+    "email": "",
+    "phone": "",
+    "total": 5000,
+    "status": "Processing",
+    "date": "2026-04-28T06:25:29.817Z",
+    "items": [
+      {
+        "id": 1,
+        "product_name": "Pirelli Angel Scooter",
+        "quantity": 1,
+        "price": 5000
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "customer": "user@tomas.com",
+    "email": "",
+    "phone": "",
+    "total": 4800,
+    "status": "Processing",
+    "date": "2026-04-28T06:22:56.486Z",
+    "items": [
+      {
+        "id": 1,
+        "product_name": "Michelin City Grip 2",
+        "quantity": 1,
+        "price": 4800
+      }
+    ]
+  },
+  {
+    "id": 1,
+    "customer": "Tyron",
+    "email": "tyron@example.com",
+    "phone": "+1-234-567-8901",
+    "total": 32740,
+    "status": "Delivered",
+    "date": "2024-03-20T10:30:00Z",
+    "items": [
+      {
+        "id": 1,
+        "product_name": "Michelin Pilot Sport 4S",
+        "quantity": 2,
+        "price": 16745
+      },
+      {
+        "id": 2,
+        "product_name": "Bridgestone Turanza T005",
+        "quantity": 1,
+        "price": 10735
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "customer": "Dexter",
+    "email": "dexter@example.com",
+    "phone": "+1-234-567-8902",
+    "total": 13795,
+    "status": "Shipped",
+    "date": "2024-03-19T14:15:00Z",
+    "items": [
+      {
+        "id": 3,
+        "product_name": "Continental ExtremeContact Sport",
+        "quantity": 1,
+        "price": 13795
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "customer": "Hiroki",
+    "email": "hiroki@example.com",
+    "phone": "+1-234-567-8903",
+    "total": 10995,
+    "status": "Delivered",
+    "date": "2024-03-18T09:45:00Z",
+    "items": [
+      {
+        "id": 4,
+        "product_name": "Goodyear Eagle F1 Asymmetric 3",
+        "quantity": 1,
+        "price": 10995
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "customer": "user@tomas.com",
+    "email": "user@tomas.com",
+    "phone": "",
+    "user_id": 2,
+    "total": 4800,
+    "status": "Processing",
+    "date": "2026-04-28T06:45:57.080Z",
+    "items": [
+      {
+        "id": 1,
+        "product_name": "Michelin City Grip 2",
+        "quantity": 1,
+        "price": 4800
+      }
+    ]
+  }
+]

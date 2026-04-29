@@ -2,9 +2,15 @@ import express from 'express';
 import mysql from 'mysql2';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 // Load environment variables
 dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -12,6 +18,45 @@ const PORT = process.env.PORT || 3001;
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// Data file paths
+const dataDir = path.join(__dirname, 'data');
+const usersFile = path.join(dataDir, 'users.json');
+const ordersFile = path.join(dataDir, 'orders.json');
+
+// Ensure data directory exists
+if (!fs.existsSync(dataDir)) {
+  fs.mkdirSync(dataDir, { recursive: true });
+}
+
+// File operations utilities
+const readJsonFile = (filePath) => {
+  try {
+    if (fs.existsSync(filePath)) {
+      const data = fs.readFileSync(filePath, 'utf8');
+      return JSON.parse(data);
+    }
+    return [];
+  } catch (error) {
+    console.error(`Error reading ${filePath}:`, error);
+    return [];
+  }
+};
+
+const writeJsonFile = (filePath, data) => {
+  try {
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8');
+    console.log(`Saved data to ${filePath}`);
+  } catch (error) {
+    console.error(`Error writing to ${filePath}:`, error);
+  }
+};
+
+// Load users from JSON file
+let users = readJsonFile(usersFile);
+
+// Load orders from JSON file
+let orders = readJsonFile(ordersFile);
 
 // MySQL Connection
 const db = mysql.createConnection({
@@ -27,7 +72,7 @@ let dbConnected = false;
 db.connect((err) => {
   if (err) {
     console.error('Error connecting to MySQL:', err);
-    console.warn('MySQL is not available. API requests will return 503 until DB credentials are fixed.');
+    console.warn('MySQL is not available. Using JSON file storage for users and orders.');
     dbConnected = false;
     return;
   }
@@ -46,12 +91,6 @@ const requireDb = (res) => {
   return true;
 };
 
-// In-memory users for demo (since DB not connected)
-let users = [
-  { id: 1, email: 'admin@tomas.com', password: 'admin123', role: 'admin' },
-  { id: 2, email: 'user@tomas.com', password: 'user123', role: 'user' }
-];
-
 // Auth routes
 app.post('/api/register', (req, res) => {
   const { email, password, role = 'user' } = req.body;
@@ -61,8 +100,15 @@ app.post('/api/register', (req, res) => {
   if (users.find(u => u.email === email)) {
     return res.status(400).json({ error: 'User already exists' });
   }
-  const newUser = { id: users.length + 1, email, password, role };
+  const newUser = { 
+    id: users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1, 
+    email, 
+    password, 
+    role,
+    createdAt: new Date().toISOString()
+  };
   users.push(newUser);
+  writeJsonFile(usersFile, users);
   res.json({ message: 'User registered successfully', user: { id: newUser.id, email: newUser.email, role: newUser.role } });
 });
 
@@ -162,138 +208,133 @@ app.delete('/api/products/:id', (req, res) => {
 
 // Get all orders
 app.get('/api/orders', requireAuth, (req, res) => {
-  if (!requireDb(res)) return;
-  const query = 'SELECT * FROM orders ORDER BY date DESC';
-  db.query(query, (err, results) => {
-    if (err) {
-      res.status(500).json({ error: err.message });
-      return;
-    }
-    res.json(results);
-  });
+  // Admin sees all orders, regular users see only their own
+  const userOrders = req.user.role === 'admin' 
+    ? orders 
+    : orders.filter(o => o.user_id === req.user.id);
+  res.json(userOrders.sort((a, b) => new Date(b.date) - new Date(a.date)));
 });
 
 // Get order by ID
-app.get('/api/orders/:id', (req, res) => {
-  if (!requireDb(res)) return;
-  const query = 'SELECT * FROM orders WHERE id = ?';
-  db.query(query, [req.params.id], (err, results) => {
-    if (err) {
-      res.status(500).json({ error: err.message });
-      return;
-    }
-    res.json(results[0]);
-  });
+app.get('/api/orders/:id', requireAuth, (req, res) => {
+  const order = orders.find(o => o.id == req.params.id);
+  if (!order) {
+    return res.status(404).json({ error: 'Order not found' });
+  }
+  // Admin can view any order, users can only view their own
+  if (req.user.role !== 'admin' && order.user_id !== req.user.id) {
+    return res.status(403).json({ error: 'Unauthorized access to this order' });
+  }
+  res.json(order);
 });
 
 // Create new order
-app.post('/api/orders', (req, res) => {
-  if (!requireDb(res)) return;
-  const { customer, total, status, items } = req.body;
-  const query = 'INSERT INTO orders (customer, total, status, date) VALUES (?, ?, ?, NOW())';
-  db.query(query, [customer, total, status], (err, results) => {
-    if (err) {
-      res.status(500).json({ error: err.message });
-      return;
-    }
+app.post('/api/orders', requireAuth, (req, res) => {
+  // Prevent admin users from placing orders
+  if (req.user.role === 'admin') {
+    return res.status(403).json({ error: 'Admins cannot place orders. Only regular users can order.' });
+  }
 
-    // Insert order items
-    const orderId = results.insertId;
-    const itemPromises = items.map(item => {
-      return new Promise((resolve, reject) => {
-        const itemQuery = 'INSERT INTO order_items (order_id, product_name, quantity, price) VALUES (?, ?, ?, ?)';
-        db.query(itemQuery, [orderId, item.name, item.quantity, item.price], (err, result) => {
-          if (err) reject(err);
-          else resolve(result);
-        });
-      });
-    });
+  const { customer, email, phone, total, status = 'Processing', items } = req.body;
+  
+  if (!customer || !total || !items || items.length === 0) {
+    return res.status(400).json({ error: 'Customer, email, total, and items are required' });
+  }
 
-    Promise.all(itemPromises)
-      .then(() => {
-        res.json({ id: orderId, ...req.body, date: new Date() });
-      })
-      .catch(err => {
-        res.status(500).json({ error: err.message });
-      });
-  });
+  const newOrder = {
+    id: orders.length > 0 ? Math.max(...orders.map(o => o.id)) + 1 : 1,
+    customer,
+    email: email || req.user.email,
+    phone: phone || '',
+    user_id: req.user.id,
+    total,
+    status,
+    date: new Date().toISOString(),
+    items: items.map((item, idx) => ({
+      id: idx + 1,
+      product_name: item.name || item.product_name,
+      quantity: item.quantity,
+      price: item.price
+    }))
+  };
+
+  orders.push(newOrder);
+  writeJsonFile(ordersFile, orders);
+  
+  res.json(newOrder);
 });
 
 // Update order status
-app.put('/api/orders/:id/status', (req, res) => {
-  if (!requireDb(res)) return;
+app.put('/api/orders/:id/status', requireAuth, (req, res) => {
   const { status } = req.body;
-  const query = 'UPDATE orders SET status = ? WHERE id = ?';
-  db.query(query, [status, req.params.id], (err, results) => {
-    if (err) {
-      res.status(500).json({ error: err.message });
-      return;
-    }
-    res.json({ id: req.params.id, status });
-  });
+  const order = orders.find(o => o.id == req.params.id);
+  
+  if (!order) {
+    return res.status(404).json({ error: 'Order not found' });
+  }
+
+  // Admin can update any order, users can only update their own
+  if (req.user.role !== 'admin' && order.user_id !== req.user.id) {
+    return res.status(403).json({ error: 'Unauthorized access to this order' });
+  }
+
+  order.status = status;
+  writeJsonFile(ordersFile, orders);
+  
+  res.json({ id: order.id, status });
 });
 
 // Delete order
-app.delete('/api/orders/:id', (req, res) => {
-  if (!requireDb(res)) return;
-  // First delete order items
-  const deleteItemsQuery = 'DELETE FROM order_items WHERE order_id = ?';
-  db.query(deleteItemsQuery, [req.params.id], (err) => {
-    if (err) {
-      res.status(500).json({ error: err.message });
-      return;
-    }
+app.delete('/api/orders/:id', requireAuth, (req, res) => {
+  const index = orders.findIndex(o => o.id == req.params.id);
+  
+  if (index === -1) {
+    return res.status(404).json({ error: 'Order not found' });
+  }
 
-    // Then delete the order
-    const deleteOrderQuery = 'DELETE FROM orders WHERE id = ?';
-    db.query(deleteOrderQuery, [req.params.id], (err, results) => {
-      if (err) {
-        res.status(500).json({ error: err.message });
-        return;
-      }
-      res.json({ message: 'Order deleted successfully' });
-    });
-  });
+  const order = orders[index];
+  
+  // Admin can delete any order, users can only delete their own
+  if (req.user.role !== 'admin' && order.user_id !== req.user.id) {
+    return res.status(403).json({ error: 'Unauthorized access to this order' });
+  }
+
+  orders.splice(index, 1);
+  writeJsonFile(ordersFile, orders);
+  
+  res.json({ message: 'Order deleted successfully' });
 });
 
 // Get dashboard stats
 app.get('/api/dashboard/stats', requireAuth, (req, res) => {
-  if (!requireDb(res)) return;
-  const queries = {
-    totalOrders: 'SELECT COUNT(*) as count FROM orders',
-    totalRevenue: 'SELECT SUM(total) as revenue FROM orders',
-    totalProducts: 'SELECT SUM(stock) as products FROM products',
-    activeUsers: 'SELECT COUNT(DISTINCT customer) as users FROM orders'
-  };
+  try {
+    // Admin sees all stats, regular users see only their own
+    const userOrders = req.user.role === 'admin' 
+      ? orders 
+      : orders.filter(o => o.user_id === req.user.id);
 
-  const results = {};
+    const totalOrders = userOrders.length;
+    const totalRevenue = userOrders.reduce((sum, order) => sum + order.total, 0);
+    const totalProducts = userOrders.reduce((sum, order) => {
+      return sum + order.items.reduce((itemSum, item) => itemSum + item.quantity, 0);
+    }, 0);
+    const activeUsers = req.user.role === 'admin' 
+      ? new Set(userOrders.map(o => o.customer)).size 
+      : 1;
 
-  const promises = Object.keys(queries).map(key => {
-    return new Promise((resolve, reject) => {
-      db.query(queries[key], (err, result) => {
-        if (err) reject(err);
-        else {
-          results[key] = result[0];
-          resolve();
-        }
-      });
+    res.json({
+      totalOrders,
+      totalRevenue,
+      totalProducts,
+      activeUsers
     });
-  });
-
-  Promise.all(promises)
-    .then(() => {
-      res.json({
-        totalOrders: results.totalOrders.count,
-        totalRevenue: results.totalRevenue.revenue || 0,
-        totalProducts: results.totalProducts.products || 0,
-        activeUsers: results.activeUsers.users
-      });
-    })
-    .catch(err => {
-      res.status(500).json({ error: err.message });
-    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  console.log(`Users data stored in: ${usersFile}`);
+  console.log(`Orders data stored in: ${ordersFile}`);
 });

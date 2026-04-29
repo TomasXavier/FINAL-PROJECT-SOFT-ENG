@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { ordersAPI } from '../src/api'
 import './Orders.css'
 
 function Orders() {
+  const navigate = useNavigate()
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -66,13 +68,19 @@ function Orders() {
   }
 
   const handleReorder = (order) => {
-    alert(`Reordering items from Order #${order.id}`)
-    // Could navigate to products with pre-filled cart
+    // Navigate to products page and show a message
+    alert(`Reordering items from Order #${order.id}. Redirecting to products page...`)
+    navigate('/products')
+    // In a real app, you'd pass the order items to the products page
   }
 
   const handleTrackOrder = (order) => {
-    alert(`Tracking Order #${order.id}: ${order.status}`)
-    // Could show tracking details
+    const trackingInfo = {
+      'Processing': 'Your order is being prepared for shipment.',
+      'Shipped': 'Your order has been shipped and is on its way.',
+      'Delivered': 'Your order has been delivered successfully.'
+    }
+    alert(`Order #${order.id} - ${order.status}\n\n${trackingInfo[order.status] || 'Tracking information not available.'}`)
   }
 
   if (loading) {

@@ -1,0 +1,23 @@
+[
+  {
+    "id": 1,
+    "email": "admin@tomas.com",
+    "password": "admin123",
+    "role": "admin",
+    "createdAt": "2024-01-01T00:00:00Z"
+  },
+  {
+    "id": 2,
+    "email": "user@tomas.com",
+    "password": "user123",
+    "role": "user",
+    "createdAt": "2024-01-01T00:00:00Z"
+  },
+  {
+    "id": 3,
+    "email": "sabyer1@email.com",
+    "password": "sabyer_1",
+    "role": "user",
+    "createdAt": "2026-04-28T06:29:25.537Z"
+  }
+]
