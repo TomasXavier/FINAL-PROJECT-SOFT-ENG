@@ -15,12 +15,12 @@ function Products() {
   const [selectedCategory, setSelectedCategory] = useState('All')
 
   const defaultProducts = [
-    { id: 1, name: 'Michelin City Grip 2', category: 'Motorcycle - Scooter Tires', price: 4800, stock: 30, description: 'Reliable urban scooter tire for stability & comfort', image: '', rating: 4.7 },
-    { id: 2, name: 'Michelin City Grip Pro', category: 'Motorcycle - Scooter Tires', price: 5200, stock: 28, description: 'Better grip for wet and dry city conditions', image: '', rating: 4.8 },
-    { id: 3, name: 'Pirelli Angel Scooter', category: 'Motorcycle - Scooter Tires', price: 5000, stock: 25, description: 'Sporty scooter tire with responsive steering', image: '', rating: 4.6 },
-    { id: 4, name: 'Pirelli Diablo Rosso Scooter', category: 'Motorcycle - Scooter Tires', price: 5500, stock: 22, description: 'High-grip performance tire for scooters', image: '', rating: 4.7 },
-    { id: 5, name: 'Michelin Pilot Street', category: 'Motorcycle - Underbone/Commuter Tires', price: 6800, stock: 24, description: 'Durable commuting tire with excellent wet traction', image: '', rating: 4.8 },
-    { id: 6, name: 'Michelin Pilot Moto GP', category: 'Motorcycle - Underbone/Commuter Tires', price: 7200, stock: 20, description: 'Sporty commuter tire with dual usage performance', image: '', rating: 4.9 },
+    { id: 1, name: 'Michelin City Grip 2', category: 'Motorcycle - Scooter Tires', price: 4800, stock: 30, description: 'Reliable urban scooter tire for stability & comfort', image: 'michelin-city-grip-2.jpg', rating: 4.7 },
+    { id: 2, name: 'Michelin City Grip Pro', category: 'Motorcycle - Scooter Tires', price: 5200, stock: 28, description: 'Better grip for wet and dry city conditions', image: 'michelin-city-grip-pro.jpg', rating: 4.8 },
+    { id: 3, name: 'Pirelli Angel Scooter', category: 'Motorcycle - Scooter Tires', price: 5000, stock: 25, description: 'Sporty scooter tire with responsive steering', image: 'pirelli-angel-scooter.jpg', rating: 4.6 },
+    { id: 4, name: 'Pirelli Diablo Rosso Scooter', category: 'Motorcycle - Scooter Tires', price: 5500, stock: 22, description: 'High-grip performance tire for scooters', image: 'pirelli-diablo-rosso-scooter.jpg', rating: 4.7 },
+    { id: 5, name: 'Michelin Pilot Street', category: 'Motorcycle - Underbone/Commuter Tires', price: 6800, stock: 24, description: 'Durable commuting tire with excellent wet traction', image: 'michelin-pilot-street.jpg', rating: 4.8 },
+    { id: 6, name: 'Michelin Pilot Moto GP', category: 'Motorcycle - Underbone/Commuter Tires', price: 7200, stock: 20, description: 'Sporty commuter tire with dual usage performance', image: 'michelin-pilot-moto-gp.jpg', rating: 4.9 },
     { id: 7, name: 'Maxxis Extramaxx M6233', category: 'Motorcycle - Underbone/Commuter Tires', price: 6200, stock: 26, description: 'Stable 14-17 inch commuter tire with comfort handling', image: '', rating: 4.5 },
     { id: 8, name: 'Pirelli Diablo Rosso Sport', category: 'Motorcycle - Underbone/Commuter Tires', price: 7300, stock: 18, description: 'Aggressive tread control and wear resistance', image: '', rating: 4.7 },
     { id: 9, name: 'Metzeler Karoo 4', category: 'Motorcycle - Adventure/Dual Sport Tires', price: 11000, stock: 16, description: 'Off-road ready dual-sport tire with traction', image: '', rating: 4.9 },
