@@ -14,6 +14,19 @@ function Products() {
   const [cart, setCart] = useState([])
   const [selectedCategory, setSelectedCategory] = useState('All')
 
+  const getTireIcon = (category) => {
+    const icons = {
+      'Motorcycle - Scooter Tires': '🛵',
+      'Motorcycle - Underbone/Commuter Tires': '🏍️',
+      'Motorcycle - Adventure/Dual Sport Tires': '🏍️',
+      'Motorcycle - Big Bike/Sport Tires': '🏍️',
+      'SUV/Truck - Highway Terrain': '🚙',
+      'Sports Car - Max Performance / Summer': '🏎️',
+      'Sports Car - Track/Semi-Slick': '🏎️'
+    }
+    return icons[category] || '🛞'
+  }
+
   const defaultProducts = [
     { id: 1, name: 'Michelin City Grip 2', category: 'Motorcycle - Scooter Tires', price: 4800, stock: 30, description: 'Reliable urban scooter tire for stability & comfort', image: 'michelin-city-grip-2.jpg', rating: 4.7 },
     { id: 2, name: 'Michelin City Grip Pro', category: 'Motorcycle - Scooter Tires', price: 5200, stock: 28, description: 'Better grip for wet and dry city conditions', image: 'michelin-city-grip-pro.jpg', rating: 4.8 },
@@ -189,11 +202,7 @@ function Products() {
             {filteredProducts.map(product => (
               <div key={product.id} className="product-card">
                 <div className="product-image">
-                  {product.image ? (
-                    <img src={product.image} alt={product.name} className="product-photo" />
-                  ) : (
-                    <div className="product-icon">🛞</div>
-                  )}
+                  <div className="product-icon">{getTireIcon(product.category)}</div>
                 </div>
                 <div className="product-info">
                   <h3>{product.name}</h3>

@@ -104,6 +104,32 @@
   width: 100%;
   object-fit: cover;
   max-height: 180px;
+  position: relative;
+}
+
+.tire-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  border: 2px solid #333;
+  transition: transform 0.3s ease;
+}
+
+.product-card:hover .tire-badge {
+  transform: scale(1.1);
+}
+
+.product-image {
+  position: relative;
 }
 
 .product-info {

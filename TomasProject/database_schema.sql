@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS order_items (
     FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
 );
 
--- Insert Sample Users
+-- Insert Users
 INSERT INTO users (email, password, role) VALUES
 ('admin@tomas.com', 'admin123', 'admin'),
 ('user@tomas.com', 'user123', 'user'),
@@ -56,7 +56,7 @@ INSERT INTO users (email, password, role) VALUES
 ('dexter@example.com', 'password123', 'user'),
 ('hiroki@example.com', 'password123', 'user');
 
--- Insert Sample Products
+-- Products
 INSERT INTO products (name, category, price, stock, description, image) VALUES
 ('Michelin Pilot Sport 4S', 'Performance', 16745.00, 15, 'Ultra-high performance tire for sports cars', '🚗'),
 ('Bridgestone Turanza T005', 'Touring', 10735.00, 8, 'Premium touring tire with excellent comfort', '🚙'),
@@ -65,13 +65,13 @@ INSERT INTO products (name, category, price, stock, description, image) VALUES
 ('Pirelli P Zero', 'Performance', 15495.00, 10, 'Flagship performance tire with racing heritage', '🏁'),
 ('Michelin Defender T+H', 'All-Season', 8795.00, 25, 'Reliable all-season tire for everyday driving', '🚐');
 
--- Insert Sample Orders with Customer Contact Info
+--  Contact Info
 INSERT INTO orders (customer, email, phone, user_id, total, status, date) VALUES
 ('Tyron', 'tyron@example.com', '+1-234-567-8901', 3, 32740.00, 'Processing', '2024-03-20 10:30:00'),
 ('Dexter', 'dexter@example.com', '+1-234-567-8902', 4, 13795.00, 'Shipped', '2024-03-19 14:15:00'),
 ('Hiroki', 'hiroki@example.com', '+1-234-567-8903', 5, 10995.00, 'Delivered', '2024-03-18 09:45:00');
 
--- Insert Sample Order Items
+-- Order Items
 INSERT INTO order_items (order_id, product_name, quantity, price) VALUES
 (1, 'Michelin Pilot Sport 4S', 2, 16745.00),
 (1, 'Bridgestone Turanza T005', 1, 10735.00),
