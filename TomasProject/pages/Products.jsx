@@ -30,7 +30,7 @@ function Products() {
     { id: 13, name: 'Michelin Road 6', category: 'Motorcycle - Big Bike/Sport Tires', price: 14500, stock: 11, description: 'All-weather sport tire for 17+ inch rims', image: '', rating: 4.9 },
     { id: 14, name: 'Pirelli Diablo Rosso III', category: 'Motorcycle - Big Bike/Sport Tires', price: 14000, stock: 10, description: 'High-performance sport tire with agility', image: '', rating: 4.8 },
     { id: 15, name: 'Pirelli Diablo Rosso IV', category: 'Motorcycle - Big Bike/Sport Tires', price: 15000, stock: 9, description: 'Ultimum sport power and grip', image: '', rating: 4.9 },
-    { id: 16, name: 'Bridgestone Dueler H/T', category: 'SUV/Truck - Highway Terrain', price: 15800, stock: 27, description: 'City & daily use all-season SUV tire', image: '', rating: 4.6 },
+    { id: 16, name: 'Bridgestone Dueler H/T', category: 'SUV/Truck - Highway Terrain', price: 15800, stock: 27, description: 'City & daily use all-season SUV tire', image: 'Bridgestone Dueler HT.avif', rating: 4.6 },
     { id: 17, name: 'Goodyear Assurance MaxGuard SUV', category: 'SUV/Truck - Highway Terrain', price: 16500, stock: 24, description: 'Improved tread life and wet handling', image: '', rating: 4.7 },
     { id: 18, name: 'Michelin Primacy SUV+', category: 'SUV/Truck - Highway Terrain', price: 17800, stock: 20, description: 'Premium comfort and quiet ride in city use', image: '', rating: 4.8 },
     { id: 19, name: 'Dunlop Grandtrek AT25', category: 'SUV/Truck - Highway Terrain', price: 15000, stock: 23, description: 'Durable highway all-terrain for SUVs', image: '', rating: 4.5 },
@@ -43,10 +43,7 @@ function Products() {
     { id: 26, name: 'Pirelli P Zero Trofeo R', category: 'Sports Car - Track/Semi-Slick', price: 26000, stock: 8, description: 'Ultimate street-legal track tire', image: '', rating: 4.9 },
     { id: 27, name: 'Bridgestone Potenza RE-71RS', category: 'Sports Car - Track/Semi-Slick', price: 17000, stock: 11, description: 'High grip time-attack performance tire', image: '', rating: 4.8 },
     { id: 28, name: 'Yokohama Advan A052', category: 'Sports Car - Track/Semi-Slick', price: 16500, stock: 10, description: 'Ultra high grip track and street tire', image: '', rating: 4.8 }
-  ].map(product => ({
-    ...product,
-    image: `https://via.placeholder.com/350x220.png?text=${encodeURIComponent(product.name)}`
-  }))
+  ]
 
   useEffect(() => {
     loadProducts()
@@ -192,7 +189,11 @@ function Products() {
             {filteredProducts.map(product => (
               <div key={product.id} className="product-card">
                 <div className="product-image">
-                  <img src={product.image} alt={product.name} className="product-photo" />
+                  {product.image ? (
+                    <img src={product.image} alt={product.name} className="product-photo" />
+                  ) : (
+                    <div className="product-icon">🛞</div>
+                  )}
                 </div>
                 <div className="product-info">
                   <h3>{product.name}</h3>
