@@ -25,7 +25,22 @@ function Home() {
           </div>
         </div>
         <div className="hero-image">
-          <div className="tire-icon">🛞</div>
+          <div className="tire-icon">
+            <svg viewBox="0 0 120 120" aria-hidden="true">
+              <circle cx="60" cy="60" r="44" fill="none" stroke="currentColor" strokeWidth="14" opacity="0.15" />
+              <circle cx="60" cy="60" r="30" fill="none" stroke="currentColor" strokeWidth="14" />
+              <g stroke="currentColor" strokeWidth="10" strokeLinecap="round">
+                <line x1="60" y1="10" x2="60" y2="34" />
+                <line x1="60" y1="110" x2="60" y2="86" />
+                <line x1="10" y1="60" x2="34" y2="60" />
+                <line x1="110" y1="60" x2="86" y2="60" />
+                <line x1="26" y1="26" x2="38" y2="38" />
+                <line x1="94" y1="94" x2="82" y2="82" />
+                <line x1="26" y1="94" x2="38" y2="82" />
+                <line x1="94" y1="26" x2="82" y2="38" />
+              </g>
+            </svg>
+          </div>
         </div>
       </section>
 

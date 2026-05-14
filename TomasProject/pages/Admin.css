@@ -194,6 +194,17 @@ th, td {
   color: #666;
 }
 
+.order-items-list ul {
+  margin: 0;
+  padding-left: 18px;
+  color: #444;
+}
+
+.order-items-list li {
+  margin-bottom: 6px;
+  line-height: 1.5;
+}
+
 th {
   background: #f5f5f5;
   font-weight: 600;

@@ -7,7 +7,6 @@ function Admin() {
   const [showEditModal, setShowEditModal] = useState(false)
   const [editingItem, setEditingItem] = useState(null)
   const [editType, setEditType] = useState('') // 'product' or 'order'
-  const [expandedOrderId, setExpandedOrderId] = useState(null) // Track expanded orders
 
   const [products, setProducts] = useState([])
   const [orders, setOrders] = useState([])
@@ -233,18 +232,6 @@ function Admin() {
             >
               📋 Orders
             </button>
-            <button
-              className={`sidebar-btn ${activeTab === 'customers' ? 'active' : ''}`}
-              onClick={() => setActiveTab('customers')}
-            >
-              👥 Customers
-            </button>
-            <button
-              className={`sidebar-btn ${activeTab === 'reports' ? 'active' : ''}`}
-              onClick={() => setActiveTab('reports')}
-            >
-              📈 Reports
-            </button>
           </div>
 
           <div className="admin-main">
@@ -410,12 +397,19 @@ function Admin() {
                               </select>
                             </td>
                             <td>
-                              <button
-                                className="btn btn-small"
-                                onClick={() => setExpandedOrderId(expandedOrderId === order.id ? null : order.id)}
-                              >
-                                {expandedOrderId === order.id ? '▼ Hide' : '▶ Show'} ({order.items.length})
-                              </button>
+                              <div className="order-items-list">
+                                {order.items && order.items.length > 0 ? (
+                                  <ul>
+                                    {order.items.map((item, idx) => (
+                                      <li key={idx}>
+                                        {item.quantity}× {item.product_name || item.name} — ₱{(item.price || 0).toFixed(2)}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                ) : (
+                                  <span>No items</span>
+                                )}
+                              </div>
                             </td>
                             <td>
                               <button
@@ -432,35 +426,6 @@ function Admin() {
                               </button>
                             </td>
                           </tr>
-                          {expandedOrderId === order.id && (
-                            <tr className="order-details-row">
-                              <td colSpan="9">
-                                <div className="order-items-detail">
-                                  <h4>Products Ordered:</h4>
-                                  <table className="items-table">
-                                    <thead>
-                                      <tr>
-                                        <th>Product Name</th>
-                                        <th>Quantity</th>
-                                        <th>Price per Unit</th>
-                                        <th>Subtotal</th>
-                                      </tr>
-                                    </thead>
-                                    <tbody>
-                                      {order.items.map((item, idx) => (
-                                        <tr key={idx}>
-                                          <td>{item.product_name}</td>
-                                          <td className="quantity-center">{item.quantity}</td>
-                                          <td>₱{item.price.toFixed(2)}</td>
-                                          <td>₱{(item.price * item.quantity).toFixed(2)}</td>
-                                        </tr>
-                                      ))}
-                                    </tbody>
-                                  </table>
-                                </div>
-                              </td>
-                            </tr>
-                          )}
                         </React.Fragment>
                       ))}
                     </tbody>
@@ -469,19 +434,6 @@ function Admin() {
               </div>
             )}
 
-            {activeTab === 'customers' && (
-              <div className="customers-management">
-                <h2>Customer Management</h2>
-                <p>Customer management features coming soon...</p>
-              </div>
-            )}
-
-            {activeTab === 'reports' && (
-              <div className="reports-management">
-                <h2>Reports & Analytics</h2>
-                <p>Reports and analytics features coming soon...</p>
-              </div>
-            )}
           </div>
         </div>
       </div>

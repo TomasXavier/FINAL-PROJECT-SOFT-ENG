@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect, useContext } from 'react'
+import { useNavigate, Navigate } from 'react-router-dom'
 import { ordersAPI } from '../src/api'
+import { AuthContext } from './app.jsx'
 import './Orders.css'
 
 function Orders() {
   const navigate = useNavigate()
+  const { user } = useContext(AuthContext)
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -81,6 +83,10 @@ function Orders() {
       'Delivered': 'Your order has been delivered successfully.'
     }
     alert(`Order #${order.id} - ${order.status}\n\n${trackingInfo[order.status] || 'Tracking information not available.'}`)
+  }
+
+  if (user?.role === 'admin') {
+    return <Navigate to="/admin" replace />
   }
 
   if (loading) {

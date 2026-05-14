@@ -41,18 +41,40 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  min-height: 320px;
 }
 
 .tire-icon {
-  font-size: 15rem;
-  opacity: 0.7;
-  animation: rotate 20s linear infinite;
-  color: #666;
+  width: 240px;
+  height: 240px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  color: #d0d0d0;
+  animation: spinFloat 8s ease-in-out infinite;
 }
 
-@keyframes rotate {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+.tire-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+@keyframes spinFloat {
+  0% {
+    transform: translateY(0) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-12px) rotate(90deg);
+  }
+  50% {
+    transform: translateY(0) rotate(180deg);
+  }
+  75% {
+    transform: translateY(12px) rotate(270deg);
+  }
+  100% {
+    transform: translateY(0) rotate(360deg);
+  }
 }
 
 .features {

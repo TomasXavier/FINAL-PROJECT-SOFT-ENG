@@ -33,12 +33,14 @@ function Navigation() {
           >
             Products
           </Link>
-          <Link
-            to="/orders"
-            className={`nav-link ${location.pathname === '/orders' ? 'active' : ''}`}
-          >
-            Orders
-          </Link>
+          {user?.role !== 'admin' && (
+            <Link
+              to="/orders"
+              className={`nav-link ${location.pathname === '/orders' ? 'active' : ''}`}
+            >
+              Orders
+            </Link>
+          )}
           {user?.role === 'admin' && (
             <Link
               to="/admin"
