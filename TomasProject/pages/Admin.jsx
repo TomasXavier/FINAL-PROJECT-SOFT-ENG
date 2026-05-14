@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { productsAPI, ordersAPI, dashboardAPI } from '../src/api'
+import { defaultProducts } from '../src/defaultProducts'
 import './Admin.css'
 
 function Admin() {
@@ -31,33 +32,14 @@ function Admin() {
         ordersAPI.getAll(),
         dashboardAPI.getStats()
       ])
-      setProducts(productsData)
+      setProducts(Array.isArray(productsData) && productsData.length > 0 ? productsData : defaultProducts)
       setOrders(ordersData)
       setStats(statsData)
       setError(null)
     } catch (err) {
       console.error('Error loading data:', err)
-      // Fallback to mock data
-      setProducts([
-        {
-          id: 1,
-          name: 'Michelin Pilot Sport 4S',
-          category: 'Performance',
-          price: 12500,
-          stock: 15,
-          description: 'High-performance tire for sports cars',
-          image: 'https://images.unsplash.com/photo-1584464491033-06628f3a6b7b?w=350&h=220&fit=crop&crop=center'
-        },
-        {
-          id: 2,
-          name: 'Bridgestone Turanza T005',
-          category: 'Touring',
-          price: 8900,
-          stock: 20,
-          description: 'Comfortable touring tire for daily driving',
-          image: 'https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=350&h=220&fit=crop&crop=center'
-        }
-      ])
+      // Fallback to shared default products
+      setProducts(defaultProducts)
       setOrders([
         {
           id: 1,
@@ -70,7 +52,7 @@ function Admin() {
       setStats({
         totalOrders: 1,
         totalRevenue: 12500,
-        totalProducts: 2,
+        totalProducts: defaultProducts.length,
         activeUsers: 5
       })
       setError(null)
