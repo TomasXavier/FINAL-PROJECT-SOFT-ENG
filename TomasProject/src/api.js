@@ -1,4 +1,6 @@
-const API_BASE_URL = 'http://localhost:3001/api';
+export const API_BASE_URL = window.location.port === '5173'
+  ? 'http://localhost:3001/api'
+  : '/api';
 
 // Helper to get auth headers
 const getAuthHeaders = () => {

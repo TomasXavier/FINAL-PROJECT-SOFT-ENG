@@ -268,5 +268,15 @@
     "description": "Ultra high grip track and street tire",
     "image": "",
     "rating": 4
+  },
+  {
+    "id": 29,
+    "name": "Dalig ni Arion",
+    "category": "Scooter Tires",
+    "price": 1000000000,
+    "stock": 6,
+    "description": "kumakapit, sumisibat ",
+    "image": "https://images.unsplash.com/photo-1584464491033-06628f3a6b7b?w=350&h=220&fit=crop&crop=center",
+    "rating": 5
   }
 ]

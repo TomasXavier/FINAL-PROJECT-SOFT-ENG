@@ -1,6 +1,7 @@
 import { useState, useContext } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { AuthContext } from './app.jsx'
+import { API_BASE_URL } from '../src/api'
 import './Register.css' 
 
 function Register() {
@@ -24,7 +25,7 @@ function Register() {
     setLoading(true)
 
     try {
-      const response = await fetch('http://localhost:3001/api/register', {
+      const response = await fetch(`${API_BASE_URL}/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
@@ -35,7 +36,7 @@ function Register() {
       if (response.ok) {
         // Auto login after registration
         try {
-          const loginResponse = await fetch('http://localhost:3001/api/login', {
+          const loginResponse = await fetch(`${API_BASE_URL}/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password })
@@ -60,7 +61,7 @@ function Register() {
       }
     } catch (err) {
       console.error('Registration error:', err)
-      setError('Cannot connect to server. Make sure the backend is running on http://localhost:3001')
+      setError('Cannot connect to server. Please refresh the page and try again.')
     } finally {
       setLoading(false)
     }

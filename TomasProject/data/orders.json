@@ -272,5 +272,43 @@
         "price": 5200
       }
     ]
+  },
+  {
+    "id": 16,
+    "customer": "arcdc2253552@slu.edu.ph",
+    "email": "arcdc2253552@slu.edu.ph",
+    "phone": "",
+    "user_id": 5,
+    "total": 7300,
+    "status": "Shipped",
+    "date": "2026-05-18T01:22:39.161Z",
+    "items": [
+      {
+        "id": 1,
+        "product_id": 8,
+        "product_name": "Pirelli Diablo Rosso Sport",
+        "quantity": 1,
+        "price": 7300
+      }
+    ]
+  },
+  {
+    "id": 17,
+    "customer": "user@tomas.com",
+    "email": "user@tomas.com",
+    "phone": "",
+    "user_id": 2,
+    "total": 1000000000,
+    "status": "Processing",
+    "date": "2026-05-18T01:45:25.054Z",
+    "items": [
+      {
+        "id": 1,
+        "product_id": 29,
+        "product_name": "Dalig ni Arion",
+        "quantity": 1,
+        "price": 1000000000
+      }
+    ]
   }
 ]

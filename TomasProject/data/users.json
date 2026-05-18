@@ -5,14 +5,15 @@
     "password": "admin123",
     "role": "admin",
     "createdAt": "2024-01-01T00:00:00Z",
-    "lastLogin": "2026-05-18T00:30:12.992Z"
+    "lastLogin": "2026-05-18T01:37:36.427Z"
   },
   {
     "id": 2,
     "email": "user@tomas.com",
     "password": "user123",
     "role": "user",
-    "createdAt": "2024-01-01T00:00:00Z"
+    "createdAt": "2024-01-01T00:00:00Z",
+    "lastLogin": "2026-05-18T01:45:04.360Z"
   },
   {
     "id": 3,
@@ -27,5 +28,29 @@
     "password": "Hiroki123",
     "role": "user",
     "createdAt": "2026-05-18T00:24:22.877Z"
+  },
+  {
+    "id": 5,
+    "email": "arcdc2253552@slu.edu.ph",
+    "password": "PSALMdevera88",
+    "role": "user",
+    "createdAt": "2026-05-18T01:19:44.502Z",
+    "lastLogin": "2026-05-18T01:19:44.602Z"
+  },
+  {
+    "id": 6,
+    "email": "artjohnmileraniceto26@gmail.com",
+    "password": "artjohn123",
+    "role": "user",
+    "createdAt": "2026-05-18T01:22:50.089Z",
+    "lastLogin": "2026-05-18T01:22:50.213Z"
+  },
+  {
+    "id": 7,
+    "email": "louishera@gmail.com",
+    "password": "heralouis1604",
+    "role": "user",
+    "createdAt": "2026-05-18T01:35:49.669Z",
+    "lastLogin": "2026-05-18T01:35:49.824Z"
   }
 ]
