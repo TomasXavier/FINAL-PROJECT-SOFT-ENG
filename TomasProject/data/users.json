@@ -4,7 +4,8 @@
     "email": "admin@tomas.com",
     "password": "admin123",
     "role": "admin",
-    "createdAt": "2024-01-01T00:00:00Z"
+    "createdAt": "2024-01-01T00:00:00Z",
+    "lastLogin": "2026-05-18T00:30:12.992Z"
   },
   {
     "id": 2,
@@ -19,5 +20,12 @@
     "password": "sabyer_1",
     "role": "user",
     "createdAt": "2026-04-28T06:29:25.537Z"
+  },
+  {
+    "id": 4,
+    "email": "Hiroki@email.com",
+    "password": "Hiroki123",
+    "role": "user",
+    "createdAt": "2026-05-18T00:24:22.877Z"
   }
 ]

@@ -24,17 +24,36 @@ function Products() {
 
   useEffect(() => {
     loadProducts()
+    loadReorderCart()
   }, [])
+
+  const loadReorderCart = () => {
+    const savedCart = localStorage.getItem('reorderCart')
+    if (!savedCart) return
+
+    try {
+      const parsedCart = JSON.parse(savedCart)
+      if (Array.isArray(parsedCart) && parsedCart.length > 0) {
+        setCart(parsedCart)
+      }
+    } catch (err) {
+      console.error('Error loading reorder cart:', err)
+    } finally {
+      localStorage.removeItem('reorderCart')
+    }
+  }
 
   const loadProducts = async () => {
     try {
       setLoading(true)
       const data = await productsAPI.getAll()
-      if (Array.isArray(data) && data.length > 0) {
-        setProducts(data)
-      } else {
-        setProducts(defaultProducts)
-      }
+      const loadedProducts = Array.isArray(data) && data.length > 0 ? data : defaultProducts
+      setProducts(loadedProducts.map(product => ({
+        ...product,
+        price: Number(product.price) || 0,
+        stock: Number(product.stock) || 0,
+        rating: Number(product.rating) || 0
+      })))
       setError(null)
     } catch (err) {
       console.error('Error loading products:', err)
@@ -65,6 +84,21 @@ function Products() {
     })
   }
 
+  const updateCartQuantity = (productId, quantity) => {
+    if (quantity <= 0) {
+      setCart(prev => prev.filter(item => item.id !== productId))
+      return
+    }
+
+    setCart(prev => prev.map(item =>
+      item.id === productId ? { ...item, quantity } : item
+    ))
+  }
+
+  const removeFromCart = (productId) => {
+    setCart(prev => prev.filter(item => item.id !== productId))
+  }
+
   const cartTotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0)
 
   const handleCheckout = async () => {
@@ -88,9 +122,11 @@ function Products() {
       // Create order data
       const orderData = {
         customer: user.email,
+        email: user.email,
         total: cartTotal,
         status: 'Processing',
         items: cart.map(item => ({
+          product_id: item.id,
           name: item.name,
           quantity: item.quantity,
           price: item.price
@@ -203,8 +239,31 @@ function Products() {
                 {cart.map(item => (
                   <div key={item.id} className="cart-item">
                     <span className="item-name">{item.name}</span>
-                    <span className="item-quantity">x{item.quantity}</span>
+                    <div className="quantity-controls">
+                      <button
+                        type="button"
+                        className="qty-btn"
+                        onClick={() => updateCartQuantity(item.id, item.quantity - 1)}
+                      >
+                        -
+                      </button>
+                      <span className="item-quantity">x{item.quantity}</span>
+                      <button
+                        type="button"
+                        className="qty-btn"
+                        onClick={() => updateCartQuantity(item.id, item.quantity + 1)}
+                      >
+                        +
+                      </button>
+                    </div>
                     <span className="item-price">₱{(item.price * item.quantity).toFixed(2)}</span>
+                    <button
+                      type="button"
+                      className="remove-cart-btn"
+                      onClick={() => removeFromCart(item.id)}
+                    >
+                      Remove
+                    </button>
                   </div>
                 ))}
                 <div className="cart-total">

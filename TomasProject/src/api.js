@@ -71,6 +71,14 @@ export const ordersAPI = {
     if (!res.ok) throw new Error('Failed to update order status');
     return res.json();
   }),
+  update: (id, order) => fetch(`${API_BASE_URL}/orders/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+    body: JSON.stringify(order)
+  }).then(res => {
+    if (!res.ok) throw new Error('Failed to update order');
+    return res.json();
+  }),
   delete: (id) => fetch(`${API_BASE_URL}/orders/${id}`, {
     method: 'DELETE',
     headers: getAuthHeaders()
@@ -86,6 +94,16 @@ export const dashboardAPI = {
     headers: getAuthHeaders()
   }).then(res => {
     if (!res.ok) throw new Error(res.status === 503 ? 'Database not connected' : 'Failed to fetch dashboard stats');
+    return res.json();
+  })
+};
+
+// Users API
+export const usersAPI = {
+  getAll: () => fetch(`${API_BASE_URL}/users`, {
+    headers: getAuthHeaders()
+  }).then(res => {
+    if (!res.ok) throw new Error('Failed to fetch users');
     return res.json();
   })
 };

@@ -239,6 +239,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 8px;
   padding: 10px 0;
   border-bottom: 1px solid #e8e8e8;
 }
@@ -257,6 +258,38 @@
 .item-price {
   font-weight: 600;
   color: #1a1a1a;
+}
+
+.quantity-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.qty-btn {
+  width: 26px;
+  height: 26px;
+  border: 1px solid #d0d0d0;
+  border-radius: 6px;
+  background: white;
+  color: #1a1a1a;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.qty-btn:hover,
+.remove-cart-btn:hover {
+  background: #f5f5f5;
+}
+
+.remove-cart-btn {
+  border: 1px solid #d0d0d0;
+  border-radius: 6px;
+  background: white;
+  color: #555;
+  cursor: pointer;
+  padding: 6px 8px;
+  font-size: 12px;
 }
 
 .cart-total {

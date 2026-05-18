@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { defaultProducts } from './src/defaultProducts.js';
 
 // Load environment variables
 dotenv.config();
@@ -26,6 +27,7 @@ app.use(express.static('dist'));
 const dataDir = path.join(__dirname, 'data');
 const usersFile = path.join(dataDir, 'users.json');
 const ordersFile = path.join(dataDir, 'orders.json');
+const productsFile = path.join(dataDir, 'products.json');
 
 // Ensure data directory exists
 if (!fs.existsSync(dataDir)) {
@@ -61,6 +63,13 @@ let users = readJsonFile(usersFile);
 // Load orders from JSON file
 let orders = readJsonFile(ordersFile);
 
+// Load products from JSON file, seeding it from the shared defaults on first run.
+let products = readJsonFile(productsFile);
+if (products.length === 0) {
+  products = defaultProducts;
+  writeJsonFile(productsFile, products);
+}
+
 // MySQL Connection
 const db = mysql.createConnection({
   host: process.env.DB_HOST || 'localhost',
@@ -94,6 +103,36 @@ const requireDb = (res) => {
   return true;
 };
 
+const findUserById = (userId) => users.find(u => u.id == userId);
+
+const enrichOrder = (order) => {
+  const orderUser = findUserById(order.user_id);
+  return {
+    ...order,
+    customer: order.customer || orderUser?.email || 'Unknown customer',
+    email: order.email || orderUser?.email || '',
+    items: Array.isArray(order.items) ? order.items : []
+  };
+};
+
+const normalizeProductPayload = (body) => ({
+  name: String(body.name || '').trim(),
+  category: String(body.category || '').trim(),
+  price: Number(body.price) || 0,
+  stock: Number(body.stock) || 0,
+  description: body.description || '',
+  image: body.image || '',
+  rating: Number(body.rating) || 0
+});
+
+const getPublicUser = (user) => ({
+  id: user.id,
+  email: user.email,
+  role: user.role,
+  createdAt: user.createdAt || null,
+  lastLogin: user.lastLogin || null
+});
+
 // Auth routes
 app.post('/api/register', (req, res) => {
   const { email, password, role = 'user' } = req.body;
@@ -121,6 +160,8 @@ app.post('/api/login', (req, res) => {
   if (!user) {
     return res.status(401).json({ error: 'Invalid credentials' });
   }
+  user.lastLogin = new Date().toISOString();
+  writeJsonFile(usersFile, users);
   // Simple token (in production, use JWT)
   const token = `token_${user.id}_${Date.now()}`;
   res.json({ token, user: { id: user.id, email: user.email, role: user.role } });
@@ -142,9 +183,38 @@ const requireAuth = (req, res, next) => {
   next();
 };
 
+const requireAdmin = (req, res, next) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Admin access required' });
+  }
+  next();
+};
+
+// Get all users for admin dashboard
+app.get('/api/users', requireAuth, requireAdmin, (req, res) => {
+  const userSummaries = users.map(user => {
+    const userOrders = orders.filter(order => order.user_id == user.id);
+    const totalSpent = userOrders.reduce((sum, order) => sum + (Number(order.total) || 0), 0);
+
+    return {
+      ...getPublicUser(user),
+      orderCount: userOrders.length,
+      totalSpent
+    };
+  });
+
+  res.json(userSummaries.sort((a, b) => {
+    const aTime = a.lastLogin ? new Date(a.lastLogin).getTime() : 0;
+    const bTime = b.lastLogin ? new Date(b.lastLogin).getTime() : 0;
+    return bTime - aTime;
+  }));
+});
+
 // Get all products
 app.get('/api/products', (req, res) => {
-  if (!requireDb(res)) return;
+  if (!dbConnected) {
+    return res.json(products);
+  }
   const query = 'SELECT * FROM products';
   db.query(query, (err, results) => {
     if (err) {
@@ -157,7 +227,10 @@ app.get('/api/products', (req, res) => {
 
 // Get product by ID
 app.get('/api/products/:id', (req, res) => {
-  if (!requireDb(res)) return;
+  if (!dbConnected) {
+    const product = products.find(p => p.id == req.params.id);
+    return product ? res.json(product) : res.status(404).json({ error: 'Product not found' });
+  }
   const query = 'SELECT * FROM products WHERE id = ?';
   db.query(query, [req.params.id], (err, results) => {
     if (err) {
@@ -170,8 +243,23 @@ app.get('/api/products/:id', (req, res) => {
 
 // Create new product
 app.post('/api/products', (req, res) => {
-  if (!requireDb(res)) return;
-  const { name, category, price, stock, description, image } = req.body;
+  const productData = normalizeProductPayload(req.body);
+
+  if (!productData.name || !productData.category) {
+    return res.status(400).json({ error: 'Product name and category are required' });
+  }
+
+  if (!dbConnected) {
+    const newProduct = {
+      id: products.length > 0 ? Math.max(...products.map(p => Number(p.id) || 0)) + 1 : 1,
+      ...productData
+    };
+    products.push(newProduct);
+    writeJsonFile(productsFile, products);
+    return res.status(201).json(newProduct);
+  }
+
+  const { name, category, price, stock, description, image } = productData;
   const query = 'INSERT INTO products (name, category, price, stock, description, image) VALUES (?, ?, ?, ?, ?, ?)';
   db.query(query, [name, category, price, stock, description, image], (err, results) => {
     if (err) {
@@ -184,8 +272,23 @@ app.post('/api/products', (req, res) => {
 
 // Update product
 app.put('/api/products/:id', (req, res) => {
-  if (!requireDb(res)) return;
-  const { name, category, price, stock, description, image } = req.body;
+  const productData = normalizeProductPayload(req.body);
+
+  if (!productData.name || !productData.category) {
+    return res.status(400).json({ error: 'Product name and category are required' });
+  }
+
+  if (!dbConnected) {
+    const index = products.findIndex(p => p.id == req.params.id);
+    if (index === -1) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+    products[index] = { ...products[index], ...productData, id: products[index].id };
+    writeJsonFile(productsFile, products);
+    return res.json(products[index]);
+  }
+
+  const { name, category, price, stock, description, image } = productData;
   const query = 'UPDATE products SET name = ?, category = ?, price = ?, stock = ?, description = ?, image = ? WHERE id = ?';
   db.query(query, [name, category, price, stock, description, image, req.params.id], (err, results) => {
     if (err) {
@@ -198,7 +301,15 @@ app.put('/api/products/:id', (req, res) => {
 
 // Delete product
 app.delete('/api/products/:id', (req, res) => {
-  if (!requireDb(res)) return;
+  if (!dbConnected) {
+    const index = products.findIndex(p => p.id == req.params.id);
+    if (index === -1) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+    products.splice(index, 1);
+    writeJsonFile(productsFile, products);
+    return res.json({ message: 'Product deleted successfully' });
+  }
   const query = 'DELETE FROM products WHERE id = ?';
   db.query(query, [req.params.id], (err, results) => {
     if (err) {
@@ -215,7 +326,7 @@ app.get('/api/orders', requireAuth, (req, res) => {
   const userOrders = req.user.role === 'admin' 
     ? orders 
     : orders.filter(o => o.user_id === req.user.id);
-  res.json(userOrders.sort((a, b) => new Date(b.date) - new Date(a.date)));
+  res.json(userOrders.map(enrichOrder).sort((a, b) => new Date(b.date) - new Date(a.date)));
 });
 
 // Get order by ID
@@ -228,7 +339,7 @@ app.get('/api/orders/:id', requireAuth, (req, res) => {
   if (req.user.role !== 'admin' && order.user_id !== req.user.id) {
     return res.status(403).json({ error: 'Unauthorized access to this order' });
   }
-  res.json(order);
+  res.json(enrichOrder(order));
 });
 
 // Create new order
@@ -255,6 +366,7 @@ app.post('/api/orders', requireAuth, (req, res) => {
     date: new Date().toISOString(),
     items: items.map((item, idx) => ({
       id: idx + 1,
+      product_id: item.id || item.product_id || null,
       product_name: item.name || item.product_name,
       quantity: item.quantity,
       price: item.price
@@ -285,6 +397,42 @@ app.put('/api/orders/:id/status', requireAuth, (req, res) => {
   writeJsonFile(ordersFile, orders);
   
   res.json({ id: order.id, status });
+});
+
+// Update order details
+app.put('/api/orders/:id', requireAuth, (req, res) => {
+  const order = orders.find(o => o.id == req.params.id);
+
+  if (!order) {
+    return res.status(404).json({ error: 'Order not found' });
+  }
+
+  if (req.user.role !== 'admin' && order.user_id !== req.user.id) {
+    return res.status(403).json({ error: 'Unauthorized access to this order' });
+  }
+
+  const { customer, email, phone, total, status, date, items } = req.body;
+
+  order.customer = customer || order.customer;
+  order.email = email ?? order.email;
+  order.phone = phone ?? order.phone;
+  order.total = Number(total) || order.total;
+  order.status = status || order.status;
+  order.date = date || order.date;
+
+  if (Array.isArray(items)) {
+    order.items = items.map((item, idx) => ({
+      id: item.id || idx + 1,
+      product_id: item.product_id || item.id || null,
+      product_name: item.product_name || item.name,
+      quantity: Number(item.quantity) || 1,
+      price: Number(item.price) || 0
+    }));
+  }
+
+  writeJsonFile(ordersFile, orders);
+
+  res.json(enrichOrder(order));
 });
 
 // Delete order
@@ -318,11 +466,11 @@ app.get('/api/dashboard/stats', requireAuth, (req, res) => {
 
     const totalOrders = userOrders.length;
     const totalRevenue = userOrders.reduce((sum, order) => sum + order.total, 0);
-    const totalProducts = userOrders.reduce((sum, order) => {
+    const totalProducts = dbConnected ? userOrders.reduce((sum, order) => {
       return sum + order.items.reduce((itemSum, item) => itemSum + item.quantity, 0);
-    }, 0);
+    }, 0) : products.length;
     const activeUsers = req.user.role === 'admin' 
-      ? new Set(userOrders.map(o => o.customer)).size 
+      ? users.filter(user => user.lastLogin).length 
       : 1;
 
     res.json({

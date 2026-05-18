@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { productsAPI, ordersAPI, dashboardAPI } from '../src/api'
+import { productsAPI, ordersAPI, dashboardAPI, usersAPI } from '../src/api'
 import { defaultProducts } from '../src/defaultProducts'
 import './Admin.css'
 
@@ -8,9 +8,11 @@ function Admin() {
   const [showEditModal, setShowEditModal] = useState(false)
   const [editingItem, setEditingItem] = useState(null)
   const [editType, setEditType] = useState('') // 'product' or 'order'
+  const [orderStatusFilter, setOrderStatusFilter] = useState('All')
 
   const [products, setProducts] = useState([])
   const [orders, setOrders] = useState([])
+  const [users, setUsers] = useState([])
   const [stats, setStats] = useState({
     totalOrders: 0,
     totalRevenue: 0, 
@@ -27,13 +29,21 @@ function Admin() {
   const loadData = async () => {
     try {
       setLoading(true)
-      const [productsData, ordersData, statsData] = await Promise.all([
+      const [productsData, ordersData, statsData, usersData] = await Promise.all([
         productsAPI.getAll(),
         ordersAPI.getAll(),
-        dashboardAPI.getStats()
+        dashboardAPI.getStats(),
+        usersAPI.getAll()
       ])
-      setProducts(Array.isArray(productsData) && productsData.length > 0 ? productsData : defaultProducts)
+      const loadedProducts = Array.isArray(productsData) && productsData.length > 0 ? productsData : defaultProducts
+      setProducts(loadedProducts.map(product => ({
+        ...product,
+        price: Number(product.price) || 0,
+        stock: Number(product.stock) || 0,
+        rating: Number(product.rating) || 0
+      })))
       setOrders(ordersData)
+      setUsers(usersData)
       setStats(statsData)
       setError(null)
     } catch (err) {
@@ -64,6 +74,15 @@ function Admin() {
   const recentOrders = orders.slice(0, 3)
 
   const lowStockProducts = products.filter(p => p.stock < 10)
+  const filteredOrders = orderStatusFilter === 'All'
+    ? orders
+    : orders.filter(order => order.status === orderStatusFilter)
+
+  const getCustomerName = (order) => order.customer || order.email || order.user?.email || 'Unknown customer'
+  const getCustomerEmail = (order) => order.email || order.user?.email || order.customer || 'N/A'
+  const getItemName = (item) => item.product_name || item.name || item.product?.name || 'Unknown product'
+  const formatCurrency = (value) => `₱${(Number(value) || 0).toFixed(2)}`
+  const formatDateTime = (value) => value ? new Date(value).toLocaleString() : 'Not logged in yet'
 
   // Product functions
   const handleEditProduct = (product) => {
@@ -133,7 +152,8 @@ function Admin() {
       price: 0,
       stock: 0,
       description: '',
-      image: 'https://images.unsplash.com/photo-1584464491033-06628f3a6b7b?w=350&h=220&fit=crop&crop=center'
+      image: 'https://images.unsplash.com/photo-1584464491033-06628f3a6b7b?w=350&h=220&fit=crop&crop=center',
+      rating: 0
     }
     setEditingItem(newProduct)
     setEditType('product')
@@ -162,8 +182,8 @@ function Admin() {
 
   const handleSaveOrder = async (updatedOrder) => {
     try {
-      const savedOrder = await ordersAPI.updateStatus(updatedOrder.id, updatedOrder.status)
-      setOrders(orders.map(o => o.id === updatedOrder.id ? { ...o, status: savedOrder.status } : o))
+      const savedOrder = await ordersAPI.update(updatedOrder.id, updatedOrder)
+      setOrders(orders.map(o => o.id === updatedOrder.id ? savedOrder : o))
       setShowEditModal(false)
       setEditingItem(null)
     } catch (err) {
@@ -214,6 +234,12 @@ function Admin() {
             >
               📋 Orders
             </button>
+            <button
+              className={`sidebar-btn ${activeTab === 'users' ? 'active' : ''}`}
+              onClick={() => setActiveTab('users')}
+            >
+              Users
+            </button>
           </div>
 
           <div className="admin-main">
@@ -257,9 +283,9 @@ function Admin() {
                       {recentOrders.map(order => (
                         <div key={order.id} className="recent-order-item">
                           <span>Order #{order.id}</span>
-                          <span>{order.customer}</span>
+                          <span>{getCustomerName(order)}</span>
                           <span>₱{order.total}</span>
-                          <span className={`status-${order.status.toLowerCase()}`}>
+                          <span className={`status-${String(order.status).toLowerCase()}`}>
                             {order.status}
                           </span>
                         </div>
@@ -334,11 +360,14 @@ function Admin() {
                 <div className="section-header">
                   <h2>Order Management - All Customer Orders</h2>
                   <div className="filters">
-                    <select>
-                      <option>All Status</option>
-                      <option>Processing</option>
-                      <option>Shipped</option>
-                      <option>Delivered</option>
+                    <select
+                      value={orderStatusFilter}
+                      onChange={(e) => setOrderStatusFilter(e.target.value)}
+                    >
+                      <option value="All">All Status</option>
+                      <option value="Processing">Processing</option>
+                      <option value="Shipped">Shipped</option>
+                      <option value="Delivered">Delivered</option>
                     </select>
                   </div>
                 </div>
@@ -358,12 +387,12 @@ function Admin() {
                       </tr>
                     </thead>
                     <tbody>
-                      {orders.map(order => (
+                      {filteredOrders.map(order => (
                         <React.Fragment key={order.id}>
                           <tr>
                             <td>#{order.id}</td>
-                            <td>{order.customer}</td>
-                            <td>{order.email || 'N/A'}</td>
+                            <td>{getCustomerName(order)}</td>
+                            <td>{getCustomerEmail(order)}</td>
                             <td>{order.phone || 'N/A'}</td>
                             <td>{new Date(order.date).toLocaleDateString()}</td>
                             <td>₱{order.total.toFixed(2)}</td>
@@ -416,6 +445,57 @@ function Admin() {
               </div>
             )}
 
+            {activeTab === 'users' && (
+              <div className="users-management">
+                <div className="section-header">
+                  <h2>User View - Logged In Users</h2>
+                  <button className="btn btn-outline" onClick={loadData}>Refresh</button>
+                </div>
+                <div className="users-summary">
+                  <div>
+                    <strong>{users.length}</strong>
+                    <span>Total Users</span>
+                  </div>
+                  <div>
+                    <strong>{users.filter(user => user.lastLogin).length}</strong>
+                    <span>Users Logged In</span>
+                  </div>
+                </div>
+                <div className="users-table">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>User ID</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Registered</th>
+                        <th>Last Login</th>
+                        <th>Orders</th>
+                        <th>Total Spent</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {users.map(user => (
+                        <tr key={user.id}>
+                          <td>#{user.id}</td>
+                          <td>{user.email}</td>
+                          <td>
+                            <span className={`role-badge role-${user.role}`}>
+                              {user.role}
+                            </span>
+                          </td>
+                          <td>{formatDateTime(user.createdAt)}</td>
+                          <td>{formatDateTime(user.lastLogin)}</td>
+                          <td>{user.orderCount || 0}</td>
+                          <td>{formatCurrency(user.totalSpent)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
           </div>
         </div>
       </div>
@@ -425,7 +505,7 @@ function Admin() {
         <div className="modal-overlay">
           <div className="modal">
             <div className="modal-header">
-              <h3>{editType === 'product' ? 'Edit Product' : 'Edit Order'}</h3>
+              <h3>{editType === 'product' ? (editingItem?.id ? 'Edit Product' : 'Add Product') : 'Edit Order'}</h3>
               <button
                 className="modal-close"
                 onClick={() => setShowEditModal(false)}
@@ -466,9 +546,10 @@ function ProductEditForm({ product, onSave, onCancel }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target
+    const numberFields = ['price', 'stock', 'rating']
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'price' || name === 'stock' ? parseFloat(value) || 0 : value
+      [name]: numberFields.includes(name) ? parseFloat(value) || 0 : value
     }))
   }
 
@@ -486,17 +567,14 @@ function ProductEditForm({ product, onSave, onCancel }) {
       </div>
       <div className="form-group">
         <label>Category:</label>
-        <select
+        <input
+          type="text"
           name="category"
           value={formData.category}
           onChange={handleChange}
+          placeholder="Example: Motorcycle - Scooter Tires"
           required
-        >
-          <option value="">Select Category</option>
-          <option value="Performance">Performance</option>
-          <option value="Touring">Touring</option>
-          <option value="All-Season">All-Season</option>
-        </select>
+        />
       </div>
       <div className="form-group">
         <label>Price:</label>
@@ -519,6 +597,37 @@ function ProductEditForm({ product, onSave, onCancel }) {
           onChange={handleChange}
           min="0"
           required
+        />
+      </div>
+      <div className="form-group">
+        <label>Description:</label>
+        <textarea
+          name="description"
+          value={formData.description || ''}
+          onChange={handleChange}
+          rows="3"
+        />
+      </div>
+      <div className="form-group">
+        <label>Image:</label>
+        <input
+          type="text"
+          name="image"
+          value={formData.image || ''}
+          onChange={handleChange}
+          placeholder="Image URL or filename"
+        />
+      </div>
+      <div className="form-group">
+        <label>Rating:</label>
+        <input
+          type="number"
+          name="rating"
+          value={formData.rating || 0}
+          onChange={handleChange}
+          step="0.1"
+          min="0"
+          max="5"
         />
       </div>
       <div className="form-actions">

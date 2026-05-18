@@ -70,10 +70,15 @@ function Orders() {
   }
 
   const handleReorder = (order) => {
-    // Navigate to products page and show a message
-    alert(`Reordering items from Order #${order.id}. Redirecting to products page...`)
+    const reorderItems = order.items.map(item => ({
+      id: item.product_id || item.id,
+      name: item.product_name || item.name,
+      price: Number(item.price) || 0,
+      quantity: Number(item.quantity) || 1
+    }))
+
+    localStorage.setItem('reorderCart', JSON.stringify(reorderItems))
     navigate('/products')
-    // In a real app, you'd pass the order items to the products page
   }
 
   const handleTrackOrder = (order) => {
